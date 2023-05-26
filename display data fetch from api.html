@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+  </head>
+  <style>
+    * {
+      padding: 0;
+      margin: 0;
+      font-family: "opensans";
+      box-sizing: border-box;
+    }
+    body {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      flex-direction: column;
+    }
+    body h1 {
+      text-align: center;
+      font-size: 25px;
+      font-family: "Courier New";
+    }
+    .center {
+      text-align: center;
+    }
+    /* css for form */
+    input[type="text"],
+    select,
+    textarea {
+      width: 100%;
+      padding: 12px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      resize: vertical;
+    }
+
+    label {
+      padding: 12px 12px 12px 0;
+      display: inline-block;
+    }
+    input[type="submit"],
+    select,
+    textarea {
+      margin-top: 10px;
+      background-color: rgb(22, 22, 22);
+      color: white;
+      width: 100%;
+      padding: 12px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    input[type="submit"]:hover {
+      color: black;
+      background-color: white;
+      border: 2px solid black;
+    }
+    .container {
+      width: 300px;
+      margin-top: 10px;
+      padding: 10px;
+      border: 2px solid black;
+      box-shadow: 4px 4px 4px 4px rgb(179, 179, 179);
+      /* block-size: fit-content; */
+    }
+    .btn {
+      /* margin-top: 10px; */
+      background-color: rgb(22, 22, 22);
+      color: white;
+      width: 100%;
+      padding: 10px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    .btn:hover {
+      color: black;
+      background-color: white;
+      border: 2px solid black;
+    }
+
+    /* css for display fethed data in boxes */
+    .boxes {
+      display: flex;
+      justify-content: left;
+      align-items: center;
+      flex-direction: row;
+      flex-wrap: wrap;
+    }
+    .box {
+      display: flex;
+      flex-direction: column;
+      /* flex-wrap: wrap; */
+      padding: 10px;
+      margin: 20px;
+      border: 2px solid black;
+      width: 250px;
+      height: 300px;
+      position: relative;
+    }
+    .dlt {
+      text-align: center;
+      width: 25%;
+      position: absolute;
+      bottom: 10px;
+      right: 10px;
+    }
+    .edit {
+      text-align: center;
+      width: 25%;
+      position: absolute;
+      bottom: 10px;
+      left: 10px;
+    }
+    .description {
+      word-wrap: break-word;
+    }
+  </style>
+  <body>
+    <div class="boxes" id="boxes"></div>
+
+    <div class="container">
+      <h1>Data of Recipie</h1>
+      <form onsubmit="submitInput(event);">
+        <div>
+          <label for="">Title</label>
+          <input
+            id="title"
+            type="text"
+            maxlength="10"
+            placeholder="Enter Title"
+            required
+          />
+        </div>
+        <div>
+          <label for="">Description</label>
+          <input
+            id="description"
+            type="text"
+            placeholder="Enter Description"
+            maxlength="250"
+            required
+          />
+        </div>
+        <input id="submit" value="submit" type="submit" />
+      </form>
+    </div>
+    <div class="container">
+      <h1>Edit Recipie</h1>
+      <form onsubmit="editInput(event);">
+        <div>
+          <label for="">Title</label>
+          <input
+            id="edittitle"
+            type="text"
+            maxlength="10"
+            placeholder="Enter Title"
+            required
+          />
+        </div>
+        <div>
+          <label for="">Description</label>
+          <input
+            id="editdescription"
+            type="text"
+            placeholder="Enter Description"
+            maxlength="250"
+            required
+          />
+        </div>
+        <input id="editsubmit" value="submit" type="submit" />
+      </form>
+    </div>
+
+    <script>
+      let editid;
+      // By default printing existing data
+      function f() {
+        fetch("https://usman-fake-api.herokuapp.com/api/recipes/")
+          .then((response) => response.json())
+          .then((data) => {
+            // console.log(data);
+            for (let i = 0; i < data.length; i++) {
+              createCard(data[i]._id, data[i].title, data[i].body);
+            }
+          });
+      }
+
+      document.addEventListener("DOMContentLoaded", function () {
+        f();
+
+        document.addEventListener("click", function (event) {
+          if (event.target.classList.contains("dlt")) {
+            var card = event.target.parentElement;
+            card.remove();
+
+            fetch(
+              `https://usman-fake-api.herokuapp.com/api/recipes/${event.target.id}`,
+              {
+                method: "DELETE",
+              }
+            );
+          } else if (event.target.classList.contains("edit")) {
+            editid = event.target.id;
+            let card = event.target.parentElement;
+            let title = card.querySelector("p.title").textContent;
+
+            let description = card.querySelector("p.description").textContent;
+            document.getElementById("edittitle").value = title.substring(7);
+            document.getElementById("editdescription").value =
+              description.substring(13);
+          }
+        });
+      });
+
+      function editInput(event) {
+        event.preventDefault();
+        var input1 = document.getElementById("edittitle").value;
+        var input2 = document.getElementById("editdescription").value;
+
+        document.getElementById("editsubmit").disabled = true;
+        document.getElementById("editsubmit").value = "Loading";
+
+        fetch(
+          `https://usman-fake-api.herokuapp.com/api/recipes/${editid.substr(
+            7
+          )}`,
+          {
+            method: "PUT",
+            body: JSON.stringify({
+              title: `${input1}`,
+              body: `${input2}`,
+            }),
+            headers: {
+              "Content-type": "application/json; charset=UTF-8",
+            },
+          }
+        )
+          .then((response) => response.json())
+          .then((json) => console.log(json));
+
+        setTimeout(() => {
+          document.getElementById("editsubmit").disabled = false;
+          document.getElementById("editsubmit").value = "Submit";
+        }, 2000);
+
+        let editcard = document.getElementById(`${editid}`).parentElement;
+
+        editcard.querySelector(
+          "p.title"
+        ).innerHTML = `<Strong>Title: </Strong>${input1}`;
+        editcard.querySelector(
+          "p.description"
+        ).innerHTML = `<Strong>Description: </Strong>${input2}`;
+        document.getElementById("edittitle").value = "";
+        document.getElementById("editdescription").value = "";
+      }
+
+      function submitInput(event) {
+        let id;
+        // console.log(event);
+        event.preventDefault();
+        var input1 = document.getElementById("title").value;
+        var input2 = document.getElementById("description").value;
+
+        document.getElementById("submit").disabled = true;
+        document.getElementById("submit").value = "Loading";
+
+        fetch("https://usman-fake-api.herokuapp.com/api/recipes/", {
+          method: "Post",
+          body: JSON.stringify({
+            title: `${input1}`,
+            body: `${input2}`,
+          }),
+          headers: {
+            "Content-type": "application/json; charset=UTF-8",
+          },
+        })
+          .then((response) => response.json())
+          .then((data) => {
+            id = data._id;
+          });
+
+        setTimeout(() => {
+          document.getElementById("submit").disabled = false;
+          document.getElementById("submit").value = "Submit";
+          createCard(id, input1, input2);
+
+          document.getElementById("title").value = "";
+          document.getElementById("description").value = "";
+        }, 2000);
+      }
+
+      // function to create cards
+
+      function createCard(a, i, j) {
+        var boxesContainer = document.getElementById("boxes");
+
+        var card = document.createElement("div");
+        card.className = "box";
+
+        var title = document.createElement("p");
+        title.className = "title";
+        var titleText = document.createElement("strong");
+        titleText.textContent = "Title:";
+        title.appendChild(titleText);
+        title.appendChild(document.createTextNode(" " + i));
+
+        card.appendChild(title);
+
+        var description = document.createElement("p");
+        description.className = "description";
+        var descriptionText = document.createElement("strong");
+        descriptionText.textContent = "Description:";
+        description.appendChild(descriptionText);
+        description.appendChild(document.createTextNode(" " + j));
+
+        card.appendChild(description);
+        var del = document.createElement("button");
+        del.id = a;
+        del.className = "btn dlt";
+        del.textContent = "Delete";
+        card.appendChild(del);
+
+        var edit = document.createElement("button");
+        edit.id = `update+${a}`;
+        edit.className = "btn edit";
+        edit.textContent = "Edit";
+        card.appendChild(edit);
+
+        boxesContainer.appendChild(card);
+      }
+    </script>
+  </body>
+</html>
